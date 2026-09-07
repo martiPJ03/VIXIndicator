@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/vix_data.dart';
 import '../services/vix_service.dart';
+import '../services/notifications_service.dart';
 
 class VixHomePage extends StatefulWidget {
   const VixHomePage({super.key, required this.title});
@@ -72,6 +73,12 @@ class _VixHomePageState extends State<VixHomePage> {
                       Text(
                         _vixData!.currentValue.toStringAsFixed(2),
                         style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      ElevatedButton(
+                        child: Icon(Icons.notifications),
+                        onPressed: () {
+                          NotificationsService.showNotification(title: 'VIX Update', body: 'Current VIX: ${_vixData?.currentValue.toStringAsFixed(2) ?? 'N/A'}');
+                        }
                       ),
                     ],
                   ),

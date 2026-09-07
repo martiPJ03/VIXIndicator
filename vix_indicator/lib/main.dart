@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'screens/vix_home_page.dart';
+import 'services/notifications_service.dart';
 
 void main() {
-  runApp(const MyApp());
+	WidgetsFlutterBinding.ensureInitialized();
+
+	await NotificationsService.initialize();
+
+  	runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
