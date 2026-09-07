@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/vix_home_page.dart';
 import 'services/notifications_service.dart';
 
-void main() {
+void main() async {
 	WidgetsFlutterBinding.ensureInitialized();
 
 	await NotificationsService.initialize();

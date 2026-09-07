@@ -15,7 +15,7 @@ class NotificationsService {
     }) async {
         const details = NotificationDetails(
             android: AndroidNotificationDetails(
-                'default_changel', 
+                'default_channel', 
                 'Default Channel', 
                 channelDescription: 'Default channel for notifications',
                 importance: Importance.high,
