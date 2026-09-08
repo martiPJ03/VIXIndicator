@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/vix_home_page.dart';
 import 'services/notifications_service.dart';
+import 'main_page.dart';
 
 void main() async {
 	WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const VixHomePage(title: 'Vix Indicator'),
+      home: const MainPage(),
     );
   }
 }
