@@ -13,7 +13,8 @@ class _ThresholdsPageState extends State<ThresholdsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Thresholds'),
+        backgroundColor: Colors.amber,
+        title: Text('Thresholds'),
       ),
       body: const Center(
         child: Text('Thresholds Page'),
