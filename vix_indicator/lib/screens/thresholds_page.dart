@@ -17,7 +17,6 @@ class _ThresholdsPageState extends State<ThresholdsPage> {
   @override
   void initState() {
     super.initState();
-    // Load saved thresholds from storage
     _loadThresholds();
   }
 
@@ -35,7 +34,7 @@ class _ThresholdsPageState extends State<ThresholdsPage> {
     final upper = double.tryParse(_upperController.text);
     final lower = double.tryParse(_lowerController.text);
 
-    if (upper == null || lower == null) {
+    if (upper == null && lower == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter valid values for both thresholds.')),
       );

@@ -15,5 +15,4 @@ class VixService {
             throw Exception('Failed to load VIX data (${response.statusCode})');
         }
     }
-    
 }

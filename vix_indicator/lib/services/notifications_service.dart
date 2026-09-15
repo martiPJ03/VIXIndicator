@@ -24,6 +24,7 @@ class NotificationsService {
   static Future<void> showNotification({
     required String title,
     required String body,
+    int id = 0,
   }) async {
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
@@ -35,6 +36,6 @@ class NotificationsService {
       ),
     );
 
-    await _notificationsPlugin.show(0, title, body, details);
+    await _notificationsPlugin.show(id, title, body, details);
   }
 }
