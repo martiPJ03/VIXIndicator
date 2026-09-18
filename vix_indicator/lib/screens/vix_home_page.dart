@@ -5,7 +5,6 @@ import '../models/vix_data.dart';
 import '../models/vix_history_point.dart';
 import '../services/vix_service.dart';
 import '../services/vix_history_service.dart';
-import '../services/notifications_service.dart';
 import '../services/history_range_storage_service.dart';
 
 extension on ChartRange {
@@ -116,64 +115,63 @@ class _VixHomePageState extends State<VixHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.amber,
-        title: Text(widget.title),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {},
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {},
+        backgroundColor: Colors.deepPurple,
+        title: Text(
+          widget.title,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20, 
+            fontWeight: FontWeight.bold
           ),
-        ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
         child: Column(
           children: [
-            Expanded(
-              child: Center(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Align(
+                alignment: Alignment.topLeft,
                 child: _error != null
                     ? Text('Error: $_error')
                     : _vixData == null
                         ? const CircularProgressIndicator()
                         : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text('VIX:'),
                               Text(
                                 _vixData!.currentValue.toStringAsFixed(2),
                                 style: Theme.of(context).textTheme.headlineMedium,
                               ),
-                              ElevatedButton(
-                                child: const Icon(Icons.notifications),
-                                onPressed: () {
-                                  NotificationsService.showNotification(
-                                    title: 'VIX Update',
-                                    body: 'Current VIX: ${_vixData?.currentValue.toStringAsFixed(2) ?? 'N/A'}',
-                                  );
-                                },
-                              ),
                             ],
                           ),
               ),
             ),
+
+            const SizedBox(height: 32),
+
             SizedBox(
-              height: 220,
+              height: 400,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Listener(
-                  onPointerDown: (_) => widget.onChartInteractionChanged?.call(true),
-                  onPointerUp: (_) => widget.onChartInteractionChanged?.call(false),
-                  onPointerCancel: (_) => widget.onChartInteractionChanged?.call(false),
-                child: _buildChart(),
+                  onPointerDown: (_) =>
+                      widget.onChartInteractionChanged?.call(true),
+                  onPointerUp: (_) =>
+                      widget.onChartInteractionChanged?.call(false),
+                  onPointerCancel: (_) =>
+                      widget.onChartInteractionChanged?.call(false),
+                  child: _buildChart(),
                 ),
               ),
             ),
             const SizedBox(height: 12),
-            _buildRangeSelector(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: _buildRangeSelector(),
+            ),
           ],
         ),
       ),
@@ -201,7 +199,12 @@ class _VixHomePageState extends State<VixHomePage> {
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
-        lineTouchData: const LineTouchData(enabled: true),
+        lineTouchData: LineTouchData(
+          enabled: true,
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (touchedSpot) => const Color.fromARGB(179, 255, 255, 255),
+          ),
+        ),
         lineBarsData: [
           LineChartBarData(
             spots: spots,
@@ -221,18 +224,27 @@ class _VixHomePageState extends State<VixHomePage> {
  
   Widget _buildRangeSelector() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: ChartRange.values.map((range) {
         final isEnabled = range.serviceRange != null;
         final isSelected = range == _selectedRange;
- 
-        return OutlinedButton(
-          onPressed: isEnabled ? () => _applyRange(range) : null,
-          style: OutlinedButton.styleFrom(
-            backgroundColor: isSelected ? Colors.deepPurple : null,
-            foregroundColor: isSelected ? Colors.white : null,
+
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2.0),
+            child: OutlinedButton(
+              onPressed: isEnabled ? () => _applyRange(range) : null,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                backgroundColor: isSelected ? Colors.deepPurple : null,
+                foregroundColor: isSelected ? Colors.white : null,
+              ),
+              child: Text(
+                range.label, 
+                style: const TextStyle(fontSize: 16)
+              ),
+            ),
           ),
-          child: Text(range.label),
         );
       }).toList(),
     );

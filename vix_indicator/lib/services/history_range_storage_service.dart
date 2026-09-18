@@ -4,10 +4,10 @@ enum ChartRange { day, week, month, year, fiveYear }
 
 extension ChartRangeLabel on ChartRange {
   String get label => switch (this) {
-    ChartRange.day => 'Day',
-    ChartRange.week => 'Week',
-    ChartRange.month => 'Month',
-    ChartRange.year => 'Year',
+    ChartRange.day => '1D',
+    ChartRange.week => '1W',
+    ChartRange.month => '1M',
+    ChartRange.year => '1Y',
     ChartRange.fiveYear => '5Y',
   };
 }
