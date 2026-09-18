@@ -20,9 +20,14 @@ extension on ChartRange {
 
 
 class VixHomePage extends StatefulWidget {
-  const VixHomePage({super.key, required this.title});
+  const VixHomePage({
+    super.key, 
+    required this.title,
+    this.onChartInteractionChanged,
+  });
 
   final String title;
+  final ValueChanged<bool>? onChartInteractionChanged;
 
   @override
   State<VixHomePage> createState() => _VixHomePageState();
@@ -158,8 +163,13 @@ class _VixHomePageState extends State<VixHomePage> {
             SizedBox(
               height: 220,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.all(16.0),
+                child: Listener(
+                  onPointerDown: (_) => widget.onChartInteractionChanged?.call(true),
+                  onPointerUp: (_) => widget.onChartInteractionChanged?.call(false),
+                  onPointerCancel: (_) => widget.onChartInteractionChanged?.call(false),
                 child: _buildChart(),
+                ),
               ),
             ),
             const SizedBox(height: 12),

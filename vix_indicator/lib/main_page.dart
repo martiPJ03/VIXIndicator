@@ -11,13 +11,24 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
+  bool _isChartInteracting = false;
 
   final PageController _pageController = PageController();
 
-  final List<Widget> _pages = const [
-    VixHomePage(title: 'Vix Indicator'),
-    ThresholdsPage(),
+  List<Widget> get _pages => [
+    VixHomePage(
+      title: 'Vix Indicator',
+      onChartInteractionChanged: _setChartInteracting,
+    ),
+    const ThresholdsPage(),
   ];
+
+  void _setChartInteracting(bool interacting) {
+    if (_isChartInteracting == interacting) return;
+    setState(() {
+      _isChartInteracting = interacting;
+    });
+  }
 
   void _onPageChanged(int index) {
     setState(() {
@@ -45,6 +56,9 @@ class _MainPageState extends State<MainPage> {
       body: PageView(
         controller: _pageController,
         onPageChanged: _onPageChanged,
+        physics: _isChartInteracting
+            ? const NeverScrollableScrollPhysics()
+            : const PageScrollPhysics(),
         children: _pages,
       ),
 
