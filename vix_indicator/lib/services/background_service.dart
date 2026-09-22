@@ -2,6 +2,7 @@ import 'package:workmanager/workmanager.dart';
 import 'vix_service.dart';
 import 'threshold_storage_service.dart';
 import 'notifications_service.dart';
+import 'intraday_history_storage_service.dart';
 
 const String vixBackgroundTaskName = "vixThresholdCheck";
 
@@ -9,16 +10,18 @@ const String vixBackgroundTaskName = "vixThresholdCheck";
 void vixBackgroundTaskDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     try {
+      final vixService = VixService();
+      final vixData = await vixService.fetchVixData();
+      final currentVixValue = vixData.currentValue;
+
+      await IntradayHistoryStorageService.addPointIfDue(currentVixValue);
+
       final (upper, lower) = await ThresholdStorageService.loadThresholds();
       if (upper == null && lower == null) {
         print("Thresholds not set. Skipping VIX check.");
         return await Future.value(true);
       }
-
-      final vixService = VixService();
-      final vixData = await vixService.fetchVixData();
-      final currentVixValue = vixData.currentValue;
-
+      
       await NotificationsService.initialize();
 
       await validateUpperThreshold(upper, currentVixValue);

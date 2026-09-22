@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/vix_data.dart';
 import '../models/vix_history_point.dart';
+import '../models/intraday_point.dart';
 import '../services/vix_service.dart';
 import '../services/vix_history_service.dart';
 import '../services/history_range_storage_service.dart';
+import '../services/intraday_history_storage_service.dart';
 
 extension on ChartRange {
   VixTimeRange? get serviceRange => switch (this) {
@@ -72,32 +74,69 @@ class _VixHomePageState extends State<VixHomePage> {
   }
 
   Future<void> _initializeHistory() async {
-  final savedRange = await HistoryRangeStorageService.loadHistoryRange();
-  
-  if (savedRange != null && mounted) {
-    setState(() {
-      _selectedRange = savedRange;
-    });
+    final savedRange = await HistoryRangeStorageService.loadHistoryRange();
+    final rangeToApply = savedRange ?? _selectedRange;
+
+    if (mounted) {
+      setState(() {
+        _selectedRange = rangeToApply;
+      });
+    }
+
+    if (rangeToApply == ChartRange.day) {
+      await _applyRange(ChartRange.day);
+      unawaited(_loadHistory(showLoadingIndicator: false));
+    } else {
+      await _loadHistory();
+    }
   }
 
-  await _loadHistory();
-}
-
-  Future<void> _loadHistory() async {
-    setState(() => _isLoadingHistory = true);
+  Future<void> _loadHistory({bool showLoadingIndicator = true}) async {
+    if (showLoadingIndicator) {
+      setState(() => _isLoadingHistory = true);
+    }
     try {
       final history = await _vixHistoryService.fetchVixHistory();
       _fullVixHistory = history;
       _historyError = null;
-      _applyRange(_selectedRange);
+      if (showLoadingIndicator) {
+        await _applyRange(_selectedRange);
+      }
     } catch (e) {
-      setState(() => _historyError = e.toString());
+      _historyError = e.toString();
+      if (showLoadingIndicator) {
+        setState(() {});
+      }
     } finally {
-      setState(() => _isLoadingHistory = false);
+      if (showLoadingIndicator) {
+        setState(() => _isLoadingHistory = false);
+      }
     }
-  }
+}
 
-  void _applyRange(ChartRange range) {
+  Future<void> _applyRange(ChartRange range) async{
+    if (range == ChartRange.day) {
+      setState(() {
+        _selectedRange = range;
+        _isLoadingHistory = true;
+        _historyError = null;
+      });
+      
+      try {
+        final points = await IntradayHistoryStorageService.loadPoints();
+        setState((){
+          _chartPoints = points.map(_toHistoryPoint).toList();
+        });
+      } catch (e) {
+        setState(() => _historyError = e.toString());
+      } finally {
+        setState(() => _isLoadingHistory = false);
+      }
+
+      await HistoryRangeStorageService.saveHistoryRange(range);
+      return;
+    }
+
     final serviceRange = range.serviceRange;
     if (serviceRange == null) {
       return;
@@ -109,6 +148,16 @@ class _VixHomePageState extends State<VixHomePage> {
     });
 
     HistoryRangeStorageService.saveHistoryRange(range);
+  }
+
+  VixHistoryPoint _toHistoryPoint(IntradayPoint point) {
+    return VixHistoryPoint(
+      date: point.timestamp,
+      open: point.value,
+      high: point.value,
+      low: point.value,
+      close: point.value,
+    );
   }
 
   @override
@@ -226,7 +275,7 @@ class _VixHomePageState extends State<VixHomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: ChartRange.values.map((range) {
-        final isEnabled = range.serviceRange != null;
+        final isEnabled = range == ChartRange.day || range.serviceRange != null;
         final isSelected = range == _selectedRange;
 
         return Expanded(
