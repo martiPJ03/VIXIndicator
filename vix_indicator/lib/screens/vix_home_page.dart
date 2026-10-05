@@ -163,65 +163,102 @@ class _VixHomePageState extends State<VixHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
-        title: Text(
-          widget.title,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20, 
-            fontWeight: FontWeight.bold
-          ),
-        ),
-      ),
+      appBar: _buildAppBar(),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: _error != null
-                    ? Text('Error: $_error')
-                    : _vixData == null
-                        ? const CircularProgressIndicator()
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('VIX:'),
-                              Text(
-                                _vixData!.currentValue.toStringAsFixed(2),
-                                style: Theme.of(context).textTheme.headlineMedium,
-                              ),
-                            ],
-                          ),
-              ),
-            ),
-
+            _buildVixValue(),
             const SizedBox(height: 32),
-
-            SizedBox(
-              height: 400,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Listener(
-                  onPointerDown: (_) =>
-                      widget.onChartInteractionChanged?.call(true),
-                  onPointerUp: (_) =>
-                      widget.onChartInteractionChanged?.call(false),
-                  onPointerCancel: (_) =>
-                      widget.onChartInteractionChanged?.call(false),
-                  child: _buildChart(),
-                ),
-              ),
-            ),
+            _buildChartSection(),
             const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: _buildRangeSelector(),
+            _buildRangeSelector(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.deepPurple,
+      title: Text(
+        widget.title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVixValue() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: _error != null
+            ? _buildError()
+            : _vixData == null
+                ? const CircularProgressIndicator()
+                : _buildCurrentVix(),
+      ),
+    );
+  }
+
+  Widget _buildError() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.error, color: Colors.red),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Could not load VIX data',
+                style: TextStyle(color: Colors.red),
+              ),
             ),
           ],
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.refresh),
+          label: const Text('Retry'),
+          onPressed: _fetchVix,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrentVix() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('VIX:'),
+        Text(
+          _vixData!.currentValue.toStringAsFixed(2),
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChartSection() {
+    return SizedBox(
+      height: 400,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Listener(
+          onPointerDown: (_) =>
+              widget.onChartInteractionChanged?.call(true),
+          onPointerUp: (_) =>
+              widget.onChartInteractionChanged?.call(false),
+          onPointerCancel: (_) =>
+              widget.onChartInteractionChanged?.call(false),
+          child: _buildChart(),
         ),
       ),
     );
@@ -229,20 +266,31 @@ class _VixHomePageState extends State<VixHomePage> {
 
   Widget _buildChart() {
     if (_isLoadingHistory && _chartPoints.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
     }
+
     if (_historyError != null && _chartPoints.isEmpty) {
-      return Center(child: Text('Could not load history: $_historyError'));
+      return Center(
+        child: Text('Could not load history: $_historyError'),
+      );
     }
+
     if (_chartPoints.isEmpty) {
-      return const Center(child: Text('No history data yet'));
+      return const Center(
+        child: Text('No history data yet'),
+      );
     }
- 
-    final spots = <FlSpot>[
+
+    final spots = [
       for (var i = 0; i < _chartPoints.length; i++)
-        FlSpot(i.toDouble(), _chartPoints[i].close),
+        FlSpot(
+          i.toDouble(),
+          _chartPoints[i].close,
+        ),
     ];
- 
+
     return LineChart(
       LineChartData(
         gridData: const FlGridData(show: false),
@@ -251,7 +299,8 @@ class _VixHomePageState extends State<VixHomePage> {
         lineTouchData: LineTouchData(
           enabled: true,
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (touchedSpot) => const Color.fromARGB(179, 255, 255, 255),
+            getTooltipColor: (_) =>
+                const Color.fromARGB(179, 255, 255, 255),
           ),
         ),
         lineBarsData: [
@@ -270,32 +319,42 @@ class _VixHomePageState extends State<VixHomePage> {
       ),
     );
   }
- 
-  Widget _buildRangeSelector() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: ChartRange.values.map((range) {
-        final isEnabled = range == ChartRange.day || range.serviceRange != null;
-        final isSelected = range == _selectedRange;
 
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.0),
-            child: OutlinedButton(
-              onPressed: isEnabled ? () => _applyRange(range) : null,
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                backgroundColor: isSelected ? Colors.deepPurple : null,
-                foregroundColor: isSelected ? Colors.white : null,
-              ),
-              child: Text(
-                range.label, 
-                style: const TextStyle(fontSize: 16)
+  Widget _buildRangeSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: ChartRange.values.map((range) {
+          final isEnabled = range.serviceRange != null;
+          final isSelected = range == _selectedRange;
+
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2.0),
+              child: OutlinedButton(
+                onPressed: isEnabled
+                    ? () => _applyRange(range)
+                    : null,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                    horizontal: 4.0,
+                  ),
+                  backgroundColor:
+                      isSelected ? Colors.deepPurple : null,
+                  foregroundColor:
+                      isSelected ? Colors.white : null,
+                ),
+                child: Text(
+                  range.label,
+                  style: const TextStyle(fontSize: 16),
+                ),
               ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }
